@@ -1,6 +1,0 @@
-opentracing:
-  jaeger:
-    service-name: OpenTracingAppA
-    enabled: TRUE
-    udp-sender:
-      host: jaeger

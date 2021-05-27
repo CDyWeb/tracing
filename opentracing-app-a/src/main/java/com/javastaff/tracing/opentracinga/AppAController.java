@@ -22,23 +22,36 @@ public class AppAController {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private Tracer tracer;
+
     @RequestMapping("/test-tracing")
-    public String entryPointController() {
+    public String endpoint1() {
     	HttpHeaders headers = new HttpHeaders();
     	headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
     	HttpEntity<String> entity = new HttpEntity<>(headers);
-    	String response=restTemplate.exchange("http://opentracing-app-b:8081/service", HttpMethod.GET, entity, String.class).getBody();	
-    	
-    	
-        Tracer tracer = GlobalTracer.get();
-        Tracer.SpanBuilder spanBuilder = tracer.buildSpan("CustomSpan")
-                .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER);
- 
-        Span span = spanBuilder.start();
+    	String response=restTemplate.exchange("http://localhost:8081/service", HttpMethod.GET, entity, String.class).getBody();
+
+        Span span = tracer.buildSpan("CustomSpan")
+                        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_SERVER)
+                        .start();
         Tags.COMPONENT.set(span, "AppAController");
         span.setTag("testtag", "test");
         span.finish();
     	
         return "Remote server said: "+response;
+    }
+
+    @RequestMapping("/test-tracing2")
+    public String endpoint2() {
+        endpoint1();
+
+        Span span = tracer.buildSpan("loop").start();
+        for (int i=0;i<5;i++) {
+            endpoint1();
+            restTemplate.exchange("http://localhost:5000", HttpMethod.GET, new HttpEntity<>(new HttpHeaders()), String.class).getBody();
+        }
+        span.finish();
+        return "yo";
     }
 }

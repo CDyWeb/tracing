@@ -1,0 +1,6 @@
+.idea
+*.iml
+opentracing-app-a/target
+opentracing-app-b/target
+**/__pycache__
+venv
